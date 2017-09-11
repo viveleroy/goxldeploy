@@ -10,7 +10,7 @@ import (
 const (
 	libraryVersion = "0.0.1"
 	basePath       = ""
-	userAgent      = "goxldeploy" + libraryVersion
+	userAgent      = "goxldeploy " + libraryVersion
 	mediaType      = "application/json"
 	format         = "json"
 )
@@ -114,4 +114,30 @@ func (c *Client) Do(req *http.Request, v interface{}) (*http.Response, error) {
 	}
 
 	return resp, err
+}
+
+// Connected checks if the client is connected to XL-Deploy
+func (c *Client) Connected() bool {
+	rel, err := url.Parse("deployit/server/info")
+	if err != nil {
+		return false
+	}
+	u := c.baseURL.ResolveReference(rel)
+	req, err := http.NewRequest("GET", u.String(), nil)
+	if err != nil {
+		return false
+	}
+
+	req.SetBasicAuth(c.Config.User, c.Config.Password)
+	req.Header.Add("Content-Type", mediaType)
+	req.Header.Add("Accept", "Application/xml")
+	req.Header.Add("User-Agent", c.UserAgent)
+
+	resp, err := c.client.Do(req)
+
+	if err == nil && resp.StatusCode == 200 {
+		return true
+	}
+
+	return false
 }
