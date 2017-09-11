@@ -15,7 +15,7 @@ const (
 	format         = "json"
 )
 
-// Config hold configuration for the client
+// Config holds configuration for the client
 type Config struct {
 	User     string
 	Password string
@@ -40,7 +40,7 @@ type Client struct {
 	Config *Config
 
 	// Services
-	// Metadata *MetadataService
+	Metadata *MetadataService
 }
 
 //NewClient returns a new functional client struct
@@ -54,7 +54,7 @@ func NewClient(config *Config) *Client {
 
 	c := &Client{client: http.DefaultClient, baseURL: &baseURL, UserAgent: userAgent, Config: config}
 
-	// c.Metadata = &MetadataService{client: c}
+	c.Metadata = &MetadataService{client: c}
 
 	return c
 }
