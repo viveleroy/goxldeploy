@@ -40,7 +40,7 @@ type Client struct {
 	Config *Config
 
 	// Services
-	Metadata *MetadataService
+	// Metadata *MetadataService
 }
 
 //NewClient returns a new functional client struct
@@ -54,7 +54,7 @@ func NewClient(config *Config) *Client {
 
 	c := &Client{client: http.DefaultClient, baseURL: &baseURL, UserAgent: userAgent, Config: config}
 
-	c.Metadata = &MetadataService{client: c}
+	// c.Metadata = &MetadataService{client: c}
 
 	return c
 }
@@ -118,20 +118,8 @@ func (c *Client) Do(req *http.Request, v interface{}) (*http.Response, error) {
 
 // Connected checks if the client is connected to XL-Deploy
 func (c *Client) Connected() bool {
-	rel, err := url.Parse("deployit/server/info")
-	if err != nil {
-		return false
-	}
-	u := c.baseURL.ResolveReference(rel)
-	req, err := http.NewRequest("GET", u.String(), nil)
-	if err != nil {
-		return false
-	}
 
-	req.SetBasicAuth(c.Config.User, c.Config.Password)
-	req.Header.Add("Content-Type", mediaType)
-	req.Header.Add("Accept", "Application/xml")
-	req.Header.Add("User-Agent", c.UserAgent)
+	req, err := c.NewRequest("deployit/server/info", "GET", nil)
 
 	resp, err := c.client.Do(req)
 
