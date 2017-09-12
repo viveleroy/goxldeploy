@@ -39,8 +39,14 @@ type Property struct {
 }
 
 // Permissions struct for permissions
-type Permissions []struct {
+type Permissions []Permission
+
+//Permission holds a single permission
+type Permission struct {
 	Level          string `json:"level"`
 	PermissionName string `json:"permissionName"`
 	Root           string `json:"root,omitempty"`
 }
+
+//Struct to hold the list of orchestrators
+type Orchstrators []string
