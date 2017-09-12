@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/url"
+	"strconv"
 )
 
 const (
@@ -20,7 +21,7 @@ type Config struct {
 	User     string
 	Password string
 	Host     string
-	Port     string
+	Port     int
 	Context  string
 	Scheme   string
 }
@@ -47,7 +48,7 @@ type Client struct {
 func NewClient(config *Config) *Client {
 	// create the base url out of the stuff given
 	var baseURL url.URL
-	finalHost := config.Host + ":" + config.Port
+	finalHost := config.Host + ":" + strconv.Itoa(config.Port)
 	baseURL.Host = finalHost
 	baseURL.Path = basePath
 	baseURL.Scheme = config.Scheme
