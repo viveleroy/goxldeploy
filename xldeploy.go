@@ -3,6 +3,7 @@ package goxldeploy
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"net/url"
 	"strconv"
@@ -26,6 +27,25 @@ type Config struct {
 	Scheme   string
 }
 
+// APIError defines the MailChimp API response error structure.
+type APIError struct {
+	Detail string
+}
+
+type ClientError struct {
+	Detail string
+}
+
+//Error method for APIError to satisfy the Error type interface
+func (e APIError) Error() string {
+	return fmt.Sprintf("xldeploy: API Error: %s", e.Detail)
+}
+
+//Error method for APIError to satisfy the Error type interface
+func (e ClientError) Error() string {
+	return fmt.Sprintf("xldeploy: Client Error: %s", e.Detail)
+}
+
 // A Client manages communication with XL-Deploy
 type Client struct {
 	// HTTP client used to communicate with the API.
@@ -41,7 +61,7 @@ type Client struct {
 	Config *Config
 
 	// Services
-	Metadata *MetadataService
+	Metadata MetadataService
 }
 
 //NewClient returns a new functional client struct
@@ -55,7 +75,7 @@ func NewClient(config *Config) *Client {
 
 	c := &Client{client: http.DefaultClient, baseURL: &baseURL, UserAgent: userAgent, Config: config}
 
-	c.Metadata = &MetadataService{client: c}
+	c.Metadata = MetadataService{client: c}
 
 	return c
 }
@@ -98,10 +118,24 @@ func (c *Client) NewRequest(urlStr string, method string, body interface{}) (*ht
 // Do executes request and returns response
 func (c *Client) Do(req *http.Request, v interface{}) (*http.Response, error) {
 
+	//Execute the request
 	resp, err := c.client.Do(req)
 
+	//Handle programmetical errors
 	if err != nil {
 		return nil, err
+	}
+
+	// Handle API error.
+	// Borrowed this code from MailChimp
+	if resp.StatusCode >= 400 {
+		buf := new(bytes.Buffer)
+		buf.ReadFrom(resp.Body)
+		apiErr := APIError{
+			Detail: buf.String(),
+		}
+
+		return nil, apiErr
 	}
 
 	defer func() {
