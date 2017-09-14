@@ -61,7 +61,8 @@ type Client struct {
 	Config *Config
 
 	// Services
-	Metadata MetadataService
+	Metadata   MetadataService
+	Repository RepositoryService
 }
 
 //NewClient returns a new functional client struct
@@ -76,6 +77,7 @@ func NewClient(config *Config) *Client {
 	c := &Client{client: http.DefaultClient, baseURL: &baseURL, UserAgent: userAgent, Config: config}
 
 	c.Metadata = MetadataService{client: c}
+	c.Repository = RepositoryService{client: c}
 
 	return c
 }
