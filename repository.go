@@ -1,5 +1,9 @@
 package goxldeploy
 
+import (
+	"strings"
+)
+
 const (
 	repositoryServicePath = "deployit/repository"
 )
@@ -29,11 +33,23 @@ type Ci struct {
 // As go does not do flat very well when it comes to json UnMarshalling we have to approche this a little different
 type Cis []Ci
 
+//NewCI generates a new Ci object given a name a type and a properties map
+func NewCI(i, t string, p map[string]interface{}) Ci {
+
+	var c Ci
+
+	c.ID = i
+	c.Type = t
+	c.Properties = p
+
+	return c
+}
+
+//GetCi fetches a CI from xld
 func (r RepositoryService) GetCI(i string) (Ci, error) {
 
 	var c Ci
 	rc := make(map[string]interface{})
-	p := make(map[string]interface{})
 
 	url := repositoryServicePath + "/ci/" + i
 
@@ -50,51 +66,22 @@ func (r RepositoryService) GetCI(i string) (Ci, error) {
 
 	//handle the properties
 
-	//loop over the received map[string]interface{}
-	for k, v := range rc {
-		switch k {
-		case "id":
-			c.ID = v.(string)
-		case "type":
-			c.Type = v.(string)
-		case "$token":
-			c.Token = v.(string)
-		case "$createdBy":
-			c.CreatedBy = v.(string)
-		case "$createdAt":
-			c.CreatedAt = v.(string)
-		case "$lastModifiedBy":
-			c.LastModifiedAt = v.(string)
-		case "$lastModifiedAt":
-			c.LastModifiedAt = v.(string)
-		default:
-			p[k] = v
-		}
-	}
-
-	//adding the properties back into the ci
-	c.Properties = p
+	c = flatToCI(rc)
 
 	return c, nil
 
 }
 
-func (r RepositoryService) CreateCI(i, t string, p map[string]interface{}) (Ci, error) {
-
-	var c Ci
-
-	c.ID = i
-	c.Type = t
-	c.Properties = p
+func (r RepositoryService) CreateCI(c Ci) (Ci, error) {
 
 	//initialize an empty receiver ci object
 	rc := Ci{}
 
 	//Compose the url
-	url := repositoryServicePath + "/ci/" + i
+	url := repositoryServicePath + "/ci/" + c.ID
 
 	//Get the Post request
-	req, err := r.client.NewRequest(url, "POST", c)
+	req, err := r.client.NewRequest(url, "POST", c.flatten())
 	if err != nil {
 		return rc, err
 	}
@@ -140,6 +127,56 @@ func (r RepositoryService) UpdateCI(i, t string, p map[string]interface{}) (Ci, 
 
 	return rc, nil
 
+}
+
+//flatten goes from a ci type to a flat map[string]interface
+// this is needed when uploading a ci to xldeploy
+func (c Ci) flatten() map[string]interface{} {
+
+	rc := make(map[string]interface{})
+
+	rc["id"] = c.ID
+	rc["type"] = c.Type
+
+	if c.Token != "" {
+		rc["token"] = c.Token
+	}
+
+	if c.Properties != nil {
+		for k, v := range c.Properties {
+			rc[k] = v
+		}
+
+		return rc
+	}
+
+	return rc
+}
+
+func flatToCI(m map[string]interface{}) Ci {
+
+	var c Ci
+
+	if val, ok := m["id"]; ok {
+		c.ID = val.(string)
+		delete(m, "id")
+	}
+	if val, ok := m["type"]; ok {
+		c.Type = val.(string)
+		delete(m, "type")
+	}
+	if val, ok := m["token"]; ok {
+		c.Token = val.(string)
+		delete(m, "token")
+	}
+
+	for k, v := range m {
+		if !strings.HasPrefix(k, "$") {
+			c.Properties[k] = v
+		}
+	}
+	//do something here
+	return c
 }
 
 // TODO
