@@ -45,6 +45,26 @@ func NewCI(i, t string, p map[string]interface{}) Ci {
 	return c
 }
 
+//NewCIFromMap takes a flat map of properties and turns it into a valic ci type that we can use
+func NewCIFromMap(m map[string]interface{}) Ci {
+	var c Ci
+	var p map[string]interface{}
+
+	for k, v := range m {
+		switch k {
+		case "name":
+			c.ID = v
+		case "type":
+			c.Type = v
+		default:
+			prop := map[string]interface{}{k: v}
+			p = append(p, prop)
+
+		}
+	}
+
+}
+
 //GetCi fetches a CI from xld
 func (r RepositoryService) GetCI(i string) (Ci, error) {
 
@@ -96,27 +116,24 @@ func (r RepositoryService) CreateCI(c Ci) (Ci, error) {
 
 }
 
-// func (m RepositoryService) DeleteCI(n string) (Ci, error) {
 
-// }
 
-func (r RepositoryService) UpdateCI(i, t string, p map[string]interface{}) (Ci, error) {
-	var c Ci
-
-	c.ID = i
-	c.Type = t
-	c.Properties = p
-
-	//initialize an empty receiver ci object
+//UpdateCI is here to update already existing ci's
+func (r RepositoryService) UpdateCI(c CI, m bool) (Ci, error) {
 	rc := Ci{}
 
-	//Compose the url
-	url := repositoryServicePath + "/ci/" + i
+	//if merge is true then merge the proposed update with the already existing properties
+	if m {
+		rc = GetCI(c.name)
+		c.merge(rc)
+	}	
 
-	//Get the Post request
-	req, err := r.client.NewRequest(url, "PUT", c)
+	url : = repositoryServicePath + "/ci/" + c.ID
+
+	req, err := r.client.NewRequest(url, "PUT", c.flatten())
+
 	if err != nil {
-		return rc, err
+		return rc, err 
 	}
 
 	//Execute the request
@@ -151,6 +168,15 @@ func (c Ci) flatten() map[string]interface{} {
 	}
 
 	return rc
+}
+
+//merge the properties 
+func (c *Ci) merge(c1 Ci) {
+	for k, v := range c1.Properties {
+		if c.Properties[k] != c1.Properties[k] {
+			c.Properties[k] = v
+		}
+	}	
 }
 
 func flatToCI(m map[string]interface{}) Ci {
