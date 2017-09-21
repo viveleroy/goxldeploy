@@ -116,24 +116,22 @@ func (r RepositoryService) CreateCI(c Ci) (Ci, error) {
 
 }
 
-
-
 //UpdateCI is here to update already existing ci's
-func (r RepositoryService) UpdateCI(c CI, m bool) (Ci, error) {
+func (r RepositoryService) UpdateCI(c Ci, m bool) (Ci, error) {
 	rc := Ci{}
 
 	//if merge is true then merge the proposed update with the already existing properties
 	if m {
 		rc = GetCI(c.name)
 		c.merge(rc)
-	}	
+	}
 
-	url : = repositoryServicePath + "/ci/" + c.ID
+	url := repositoryServicePath + "/ci/" + c.ID
 
 	req, err := r.client.NewRequest(url, "PUT", c.flatten())
 
 	if err != nil {
-		return rc, err 
+		return rc, err
 	}
 
 	//Execute the request
@@ -170,13 +168,13 @@ func (c Ci) flatten() map[string]interface{} {
 	return rc
 }
 
-//merge the properties 
+//merge the properties
 func (c *Ci) merge(c1 Ci) {
 	for k, v := range c1.Properties {
 		if c.Properties[k] != c1.Properties[k] {
 			c.Properties[k] = v
 		}
-	}	
+	}
 }
 
 func flatToCI(m map[string]interface{}) Ci {
