@@ -53,16 +53,18 @@ func NewCIFromMap(m map[string]interface{}) Ci {
 	for k, v := range m {
 		switch k {
 		case "name":
-			c.ID = v
+			c.ID = v.(string)
 		case "type":
-			c.Type = v
+			c.Type = v.(string)
 		default:
-			prop := map[string]interface{}{k: v}
-			p = append(p, prop)
+			p[k] = v
 
 		}
 	}
 
+	c.Properties = p
+
+	return c
 }
 
 //GetCi fetches a CI from xld
@@ -122,7 +124,10 @@ func (r RepositoryService) UpdateCI(c Ci, m bool) (Ci, error) {
 
 	//if merge is true then merge the proposed update with the already existing properties
 	if m {
-		rc = GetCI(c.name)
+		rc, err := r.GetCI(c.ID)
+		if err != nil {
+			return rc, err
+		}
 		c.merge(rc)
 	}
 
