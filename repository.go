@@ -181,11 +181,14 @@ func flatToCI(m map[string]interface{}) Ci {
 		delete(m, "token")
 	}
 
+	props := make(map[string]interface{})
 	for k, v := range m {
 		if !strings.HasPrefix(k, "$") {
-			c.Properties[k] = v
+			props[k] = v
 		}
 	}
+
+	c.Properties = props
 	//do something here
 	return c
 }
