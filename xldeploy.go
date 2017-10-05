@@ -157,7 +157,6 @@ func (c *Client) Do(req *http.Request, v interface{}) (*http.Response, error) {
 func (c *Client) Connected() bool {
 
 	req, err := c.NewRequest("deployit/server/info", "GET", nil)
-
 	resp, err := c.client.Do(req)
 
 	if err == nil && resp.StatusCode == 200 {
