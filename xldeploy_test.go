@@ -23,7 +23,7 @@ func TestNewClient(t *testing.T) {
 	xld := goxldeploy.NewClient(&cfg)
 	// Test if user is set in client
 	if xld.Config.User != "admin" {
-		t.Errorf("User incorrect, got: %d, want: %d.", xld.Config.User, "admin")
+		t.Errorf("User incorrect, got: %s, want: %s.", xld.Config.User, "admin")
 	}
 	// Test if port is set in client
 	if xld.Config.Port != 4516 {
@@ -31,7 +31,7 @@ func TestNewClient(t *testing.T) {
 	}
 	// Test if scheme has a value
 	if xld.Config.Scheme == "" {
-		t.Errorf("Scheme incorrect, got: %d, want: %d.", xld.Config.Scheme, "http")
+		t.Errorf("Scheme incorrect, got: %s, want: %s.", xld.Config.Scheme, "http")
 	}
 
 }
@@ -41,7 +41,7 @@ func TestNew(t *testing.T) {
 	xld := goxldeploy.New(&cfg)
 	// Test if user is set in client
 	if xld.Config.User != "admin" {
-		t.Errorf("User incorrect, got: %d, want: %d.", xld.Config.User, "admin")
+		t.Errorf("User incorrect, got: %s, want: %s.", xld.Config.User, "admin")
 	}
 	// Test if port is set in client
 	if xld.Config.Port != 4516 {
@@ -49,7 +49,7 @@ func TestNew(t *testing.T) {
 	}
 	// Test if scheme has a value
 	if xld.Config.Scheme == "" {
-		t.Errorf("Scheme incorrect, got: %d, want: %d.", xld.Config.Scheme, "http")
+		t.Errorf("Scheme incorrect, got: %s, want: %s.", xld.Config.Scheme, "http")
 	}
 
 }
@@ -59,6 +59,9 @@ func TestConnected(t *testing.T) {
 	xld := goxldeploy.NewClient(&cfg)
 	// Test if connected fails
 	if xld.Connected() == true {
+		t.Errorf("Should not be connected")
+	}
+	if xld.Connected() != false {
 		t.Errorf("Should not be connected")
 	}
 }
@@ -75,10 +78,20 @@ func TestNewRequest(t *testing.T) {
 	}
 	// Test if host matches
 	if req.Host != "thisisabogushostnamethatdoesnotexsist:4516" {
-		t.Errorf("Host incorrect, got: %d, want %d.", req.Host, "thisisabogushostnamethatdoesnotexsist:4516")
+		t.Errorf("Host incorrect, got: %s, want %s.", req.Host, "thisisabogushostnamethatdoesnotexsist:4516")
 	}
 
 	if req.URL.String() != "http://thisisabogushostnamethatdoesnotexsist:4516/deployit/server/info" {
-		t.Errorf("NewRequest(%v) URL = %v, expected %v", inUrl, req.URL, outUrl)
+		t.Errorf("NewRequest(%s) URL = %s, expected %s", inUrl, req.URL, outUrl)
+	}
+	// Test if wrong URL will fail with the correct error
+	inUrl = "!@#$%^&*()"
+	req, err = xld.NewRequest(inUrl, "GET", nil)
+	if err == nil {
+		t.Errorf("NewRequest(%s), this should fail as the URL is invalid", inUrl)
+	} else {
+		if err.Error() != "parse !@#$%^&*(): invalid URL escape \"%^&\"" {
+			t.Errorf("NewRequest(%s), unexpected error: %s", inUrl, err.Error())
+		}
 	}
 }
