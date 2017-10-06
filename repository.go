@@ -9,6 +9,11 @@ type RepositoryService struct {
 	client *Client
 }
 
+//CIEXistsAnswer Type to catch the outcome of a ci exists query
+type CiExistsAnswer struct {
+	Boolean bool `json:"boolean,omitempty"`
+}
+
 //GetCi fetches a CI from xld
 func (r RepositoryService) GetCI(i string) (Ci, error) {
 
@@ -111,6 +116,28 @@ func (r RepositoryService) UpdateCI(c Ci) (Ci, error) {
 	rc = FlatToCI(fc)
 
 	return rc, nil
+
+}
+
+//CIExists checks if a certain configuration item exists in the xldeploy repository
+func (r RepositoryService) CIExists(i string) (bool, error) {
+	//initialize an empty receiver ci object
+	var ro CiExistsAnswer
+	url := repositoryServicePath + "/Exists/" + i
+
+	req, err := r.client.NewRequest(url, "GET", nil)
+
+	if err != nil {
+		return false, err
+	}
+
+	//Execute the request
+	_, err = r.client.Do(req, &ro)
+	if err != nil {
+		return false, err
+	}
+
+	return ro.Boolean, nil
 
 }
 
